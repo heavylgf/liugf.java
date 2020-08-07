@@ -1,0 +1,36 @@
+
+![](04_hdfs整体架构原理(3).png)
+
+之前简单说了一下hdfs namenode的元数据存储机制，是通过fsimage和edits log来实现的，那么我们这里退回到历史中的hadoop 1.x版本来聊一下，当时的情况是怎么样的，这样让大家知道下hadoop架构的演进
+
+hadoop 1.x的时候，namenode启动，就是将fsimage读到内存里，然后对fsimage应用edits log来推进到元数据的最新状态，将最新fsimage写入磁盘文件，接着清空掉edits log。然后接下来你不是不断的在操作hdfs么，namenode会不断修改元数据，此时都是每次直接在内存里修改fsimage缓存，同时直接将变更日志追加到edits log里去的
+
+那大家想一下，为啥不能每次直接将变更写入fsimage文件啊？因为fsimage太大啦，那是一个完整的hdfs集群元数据，这个文件很大的，还有你怎么随机修改文件里的数据啊，根本不现实么，是不是，磁盘随机读写性能会极差
+
+所以就每次直接元数据修改保存在内存里，然后顺序追加一个edits log
+
+这样有一个很大的问题，那edits log一直被不断的追加，他会变得很大很大很大很大，对不对？直到下一次namenode重启，edits log才能在内存里和fsimage合并后写入一份新的fsimage到磁盘里，然后edits log才能被清空掉
+
+那在下一次namenode重启之前呢？坑爹了吧，edits log变得巨大无比，巨大无比会咋样？下一次你重启namenode的时候速度会超慢，因为要把一个巨大无比的edits log和fsimage进行合并啊
+
+所以有一个思路就是在运行期间，定时将edits log和fsimage进行合并，不断的往磁盘里写新的fsimage，同时清空掉edits log，这样就可以保证edits log不会很大了
+
+但是大家有没有考虑过这有个什么问题啊？
+
+就是说如果在namenode上搞这个edits log的不断的读取以及在内存中跟fsimage合并，然后还把fsimage写回去，同时清空edits log，这个操作是非常消耗性能的，因为涉及到很多的文件读写操作，这可能就会导致namenode这块性能下降
+
+所以说，有一个角色，叫做secondary namenode，他一般独立部署在另外一台机器上，他就是专门在后台干这个edits log和fsimage合并的事儿的，他会每隔一段时间会执行一个checkpoint操作，通知namenode别写edits log，暂时写一个new edits log。然后将namenode上的fsimage和edits log拉到自己本地来，然后读到内存里去进行合并，合并后写一份新的fsimage到自己本地磁盘
+
+然后secondary namenode将最新的fsimage推送到namenode上去，同时namenode会将new edits log这个文件变为edits log，o了，这个操作就是所谓的checkpoint操作对吧，那么这样就可以保证edits log定时合并到fsimage中去，不会变得特别大
+
+而且secondary namenode还可以作为是namenode的一个冷备份，因为secondary namenode每次都保存了一个最近一次checkpoint的fsimage的快照，如果namenode上元数据损坏或者丢失，那么可以直接用secondary namenode上的啊，只不过丢失掉上次checkpoint之后发生的元数据变更罢了，因为那还在namenode的edits log中，还没合并到fsimage里去
+
+这个默认的secondary namenode执行checkpoint的周期是3600秒，也就是1小时1次，或者是edits log只要达到了64mb，也会执行一次checkpoint，通过这个来确保edits log不会变的太大了
+
+但是因为所谓的secondary namenode是hadoop 1.x的一个东西，这里咱们就不要讲了
+
+然后这里多提一嘴，因为secondary namenode这个名字比较让人感觉引发了歧义，很多人以为这个secondary namenode是用来做数据备份的，名字起的不太恰当，但是其实这个东东是用来做checkpoint的，就是定期在后台默默的合并fsimage和edits log保证edits log不要太大
+
+所以从hadoop 1.0.4版本之后，就提供了一种checkpoint node，换了个名字，其实就是secondary namenode，一样的
+
+

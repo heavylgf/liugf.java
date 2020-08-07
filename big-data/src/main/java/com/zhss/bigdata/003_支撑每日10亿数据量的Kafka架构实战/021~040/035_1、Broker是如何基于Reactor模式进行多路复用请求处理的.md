@@ -1,0 +1,22 @@
+![](035_2、kafka高吞吐低延迟（零拷贝） %20(13).png)
+
+每个broker上都有一个acceptor线程和很多个processor线程，可以用num.network.threads参数设置processor线程的数量，
+默认是3，client跟一个broker之间只会创建一个socket长连接，他会复用
+
+然后broker就用一个acceptor来监听每个socket连接的接入，分配这个socket连接给一个processor线程，processor线程负责
+处理这个socket连接，监听socket连接的数据传输以及客户端发送过来的请求，acceptor线程会不停的轮询各个processor来分配
+接入的socket连接
+
+proessor需要处理多个客户端的socket连接，就是通过java nio的selector多路复用思想来实现的，用一个selector监听各个
+socket连接，看其是否有请求发送过来，这样一个processor就可以处理多个客户端的socket连接了
+
+processor线程会负责把请求放入一个broker全局唯一的请求队列，默认大小是500，是queued.max.requests参数控制的，所以
+那几个processor会不停的把请求放入这个请求队列中
+
+接着就是一个KafkaRequestHandler线程池负责不停的从请求队列中获取请求来处理，这个线程池大小默认是8个，由num.io.threads
+参数来控制，处理完请求后的响应，会放入每个processor自己的响应队列里
+
+每个processor其实就是负责对多个socket连接不停的监听其传入的请求，放入请求队列让KafkaRequestHandler来处理，然后会监听
+自己的响应队列，把响应拿出来通过socket连接发送回客户端
+
+

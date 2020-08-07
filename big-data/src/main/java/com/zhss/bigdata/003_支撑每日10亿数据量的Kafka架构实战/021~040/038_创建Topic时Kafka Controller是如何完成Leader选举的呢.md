@@ -1,0 +1,29 @@
+
+
+如果你现在创建一个Topic，肯定会分配几个Partition，每个partition还会指定几个副本，这个时候创建的过程中就会在zookeeper中
+注册对应的topic的元数据，包括他有几个partition，每个partition有几个副本，每个partition副本的状态，
+此时状态都是：NonExistentReplica
+
+然后Kafka Controller本质其实是会监听zk上的数据变更的，所以此时就会感知到topic变动，接着会从zk中加载所有partition副本到
+内存里，把这些partition副本状态变更为：NewReplica，然后选择的第一个副本作为leader，其他都是follower，并且把他们都放到
+partition的ISR列表中
+
+比如说你创建一topic，order_topic，3个partition，每个partition有2个副本，写入zk里去
+
+/topics/order_topic
+
+partitions = 3, replica_factor = 2
+
+[partition0_1, partition0_2]
+[partition1_1, partition1_2]
+[partition2_1, partition2_2]
+
+从每个parititon的副本列表中取出来第一个作为leader，其他的就是follower，把这些东西给放到partition对应的ISR列表里去
+
+每个partition的副本在哪台机器上呢？会做一个均匀的分配，把partition分散在各个机器上面，通过算法来保证，尽可能把每个
+leader partition均匀分配在各个机器上，读写请求流量都是打在leader partition上的
+
+同时还会设置整个Partition的状态：OnlinePartition
+
+接着Controller会把这个partition和副本所有的信息（包括谁是leader，谁是follower，ISR列表），都发送给所有broker让他们知晓，
+在kafka集群里，controller负责集群的整体控制，但是每个broker都有一份元数据

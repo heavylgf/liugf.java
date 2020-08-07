@@ -1,0 +1,20 @@
+
+
+![](014_2、kafka高吞吐低延迟（零拷贝）%20(3).png)
+
+
+但是这里就有一个问题了，如果此时Kafka某台机器宕机了，那么一个topic就丢失了一个partition的数据，此时不就导致数据丢失了吗？所以啊，
+所以对数据做多副本冗余，也就是每个parttion都有副本
+
+比如最基本的就是每个partition做一个副本，副本放在另外一台机器上
+
+然后呢kafka自动从一个partition的多个副本中选举出来一个leader partition，这个leader partition就负责对外提供这个partiton的数据读写，
+接收到写过来的数据，就可以把数据复制到副本partition上去
+
+这个时候如果说某台机器宕机了，上面的leader partition没了，此时怎么办呢？通过zookeeper来维持跟每个kafka的会话，如果一个kafka进程
+宕机了，此时kafka集群就会重新选举一个leader partition，就是用他的某个副本partition即可
+
+通过副本partition可以继续体统这个partition的数据写入和读取，这样就可以实现容错了，这个副本partition的专业术语
+叫做follower partition，所以每个partitino都有多个副本，其中一个是leader，是选举出来的，其他的都是follower partition
+
+多副本冗余的机制，就可以实现Kafka高可用架构

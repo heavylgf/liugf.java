@@ -1,0 +1,12 @@
+
+
+在kafka集群启动的时候，会自动选举一台broker出来承担controller的责任，然后负责管理整个集群，这个过程就是说集群中每个broker
+都会尝试在zk上创建一个/controller临时节点
+
+zk的一些基础知识和临时节点是什么，百度一下zookeeper入门
+
+但是zk会保证只有一个人可以创建成功，这个人就是所谓controller角色
+
+一旦controller所在broker宕机了，此时临时节点消失，集群里其他broker会一直监听这个临时节点，发现临时节点消失了，就争抢再次创建
+临时节点，保证有一台新的broker会成为controller角色
+

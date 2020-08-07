@@ -1,0 +1,11 @@
+
+
+如果你要是删除某个Topic的话，Controller会发送请求给这个Topic所有Partition所在的broker机器，通知设置所有
+Partition副本的状态为：OfflineReplica，也就是让副本全部下线，接着Controller接续将全部副本状态
+变为：ReplicaDeletionStarted
+
+然后Controller还要发送请求给broker，把各个partition副本的数据给删了，其实对应的就是删除磁盘上的那些文件，删除成功之后，
+副本状态变为：ReplicaDeletionSuccessful，接着再变为NonExistentReplica
+
+而且还会设置分区状态为：Offline
+

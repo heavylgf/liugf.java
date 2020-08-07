@@ -1,0 +1,16 @@
+
+之前大家了解过原理了，现在都知道，其实扩容增加broker是很容易的，只要配置好这个broker，然后穷，他会自动在zk里加入自己的
+节点，然后这个时候Controller会感知到他的加入，同步给其他所有的broker
+
+而且Controller还会自动把集群元数据同步给这个新的broker，就是有哪些topic，每个topic有多少partitioin，每个partition有几个
+副本，以及对应的ISR
+
+但是刚启动的broker不会自动被负载均衡迁移一些partiton，需要手动进行partiton在集群里的负载均衡，这样让每台broker机器管理
+均匀的数据量，同时分配leader partition承载均匀的读写请求流量
+
+比如说现在你有3个topic，每个topic有5个partition，每个partitino有2个副本，一共有partition副本数量有30个，比如原来有
+3台broker，每台broker有10个partition副本，现在加入了第四台broker了
+
+partition概念，资源都集中在partition里面了，数据是在partition作为单位来存放的，读写负载也是针对leader partition来进行的
+
+

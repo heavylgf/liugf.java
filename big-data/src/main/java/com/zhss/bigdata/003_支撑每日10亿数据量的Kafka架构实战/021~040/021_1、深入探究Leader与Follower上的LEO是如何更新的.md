@@ -1,0 +1,12 @@
+
+![](021_2、kafka高吞吐低延迟（零拷贝）%20(8).png)
+
+
+首先leader接收到数据字后就会更新自己的LEO值
+
+接着follower会不断的向leader发送fetch请求同步数据，然后每次一条数据同步到follower之后，他的LEO就会更新，同时leader发送
+数据给follower的时候，在leader端会维护所有follower的LEO值
+
+follower发送fetch请求给leader的时候会带上自己的LEO值，然后leader每次收到一个fetch请求就会更新自己维护的每个follower的LEO值
+
+所以这里大家要知道的是，leader上是会保存所有follower的LEO值的，这个是非常关键和核心的一点

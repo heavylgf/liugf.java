@@ -1,0 +1,13 @@
+
+![](022_2、kafka高吞吐低延迟（零拷贝）%20(9).png)
+
+每次leader发送数据给follower的时候，都会发送自己的HW值，然后follower获取到leader HW之后，就会跟自己的LEO比较一下，取里面小
+的那个值作为自己的HW值，换句话说，如果follower的LEO比leader HW大了，那么follower的HW就是leader HW
+
+但是如果follower的LEO比leader HW小，说明自己明显落后于leader，那么follower的HW就是自己的LEO值
+
+然后leader上的HW就很明显了，那就是主要是他在接收follower的fetch请求的时候，就会在更新自己维护的所有follower的LEO之后，
+判断一下当前自己的LEO是否跟所有follower都保持一致，那么就会自动更新自己的HW值
+
+这个leader的HW值就是partition的HW值，代表了从这个partition的哪个offset之前可以被消费数据
+

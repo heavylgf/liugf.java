@@ -1,0 +1,13 @@
+
+
+不知道大家有没有思考过一个问题，就是Kafka集群中某个broker宕机之后，是谁负责感知到他的宕机，以及负责进行Leader Partition的选举？
+如果你在Kafka集群里新加入了一些机器，此时谁来负责把集群里的数据进行负载均衡的迁移？
+
+包括你的kafka集群的各种元数据，比如说每台机器上有哪些partition，谁是leader，谁是follower，是谁来管理的？如果你要删除一个topic，
+那么背后的各种partition如何删除，是谁来控制？
+
+还有就是比如kafka集群扩容加入一个新的broker，是谁负责监听这个broker的加入？如果某个broker崩溃了，是谁负责监听这个broker崩溃？
+
+这里就需要一个kafka集群的总控组件，Controller。他负责管理整个kafka集群范围内的各种东西
+
+
