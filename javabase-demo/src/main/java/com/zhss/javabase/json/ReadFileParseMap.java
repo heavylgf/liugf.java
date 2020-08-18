@@ -1,4 +1,4 @@
-package com.zhss.javabase;
+package com.zhss.javabase.json;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
