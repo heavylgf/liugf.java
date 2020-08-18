@@ -2,6 +2,13 @@ package com.zhss.javabase.json;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.zhss.javabase.FilePropertiesMapModel;
+import com.zhss.javabase.ReadFileParseMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  * json工具类
@@ -9,6 +16,9 @@ import com.alibaba.fastjson.JSONObject;
  * @Date: 2020/8/13 下午4:15
  */
 public class JsonUtils {
+
+    private static final Logger Logger = LoggerFactory.getLogger(JsonUtils.class);
+
 
     /**
      * 获取json中的值
@@ -23,6 +33,89 @@ public class JsonUtils {
     }
 
     public static void main(String[] args) {
+        String json = "{\"STAT_DATE\":\"20200817\",\n" +
+                "\"TG_NAME\":\"曲二路下合乐寺三五社002公网变\",\n" +
+                "\"TG_ID\":\"8254775\",\n" +
+                "\"IS_COMP\":\"0\",\n" +
+                "\"ORG_NO\":\"634020103\",\n" +
+                "\"EXTEND_FIELD_UPDATE_TIME\":\"1597652816000\",\n" +
+                "\"IS_MAIN\":\"1\",\n" +
+                "\"TG_NO\":\"0002820014\",\n" +
+                "\"TG_CAP\":\"200.000000\",\n" +
+                "\"PRO_ORG_NO\":\"63101\",\n" +
+                "\"PUB_PRIV_FLAG\":\"01\",\n" +
+                "\"EXTEND_FIELD_UPDATE_FLAG\":\"I\",\n" +
+                "\"RUN_STATUS_CODE\":\"01\",\n" +
+                "\"EXTEND_FIELD_1\":\"8254775\",\n" +
+                "\"RELA_TG_ID\":\"null\",\n" +
+                "\"CHG_DATE\":\"2016-12-29 11:58:13\",\n" +
+                "\"INST_ADDR\":\"null\"\n" +
+                "}";
+
+        // 读取topic 配置文件
+        ReadFileParseMap readFileParseMap = new ReadFileParseMap();
+        List<FilePropertiesMapModel> filePropertiesMapModelList = new ArrayList<>();
+        try {
+            filePropertiesMapModelList = readFileParseMap.readfile();
+        } catch (Exception e) {
+            System.out.println("加载topic 配置文件出错：" + e);
+
+        }
+
+        for (int i = 0; i < filePropertiesMapModelList.size(); i++) {
+            // 获取topicName
+            String kafkaTopicName = filePropertiesMapModelList.get(i).getKafkaTopicName();
+            String datahubTopicName = filePropertiesMapModelList.get(i).getDatahubTopicName();
+
+            System.out.println("kafkaTopicName: " + kafkaTopicName);
+            System.out.println("datahubTopicName: " + datahubTopicName);
+
+            JSONObject jsonObject = JSON.parseObject(json);
+
+            while (true) {
+
+                if (jsonObject != null) {
+                    // 通过获取该topic字段类型，来赋值给data
+                    for (Map.Entry<String, String> column_types :
+                            filePropertiesMapModelList.get(i).getMappropertis().entrySet()) {
+
+                        // 获取字段名
+                        String column = column_types.getKey();
+                        // 获取字段类型
+                        String type = column_types.getValue();
+
+                        Logger.info("数据写入一条：" + "column: " + column + ", type: " + type);
+
+                        Logger.info("jsonObject.getString(column):" + jsonObject.getString(column));
+
+                        // 过滤值为null的
+                        if ("null".equals(jsonObject.getString(column))) {
+                            Logger.info("continue，continue，continue");
+                            continue;
+                        }
+
+                        // 根据列名查询kafka中解析的数据是否有值
+                        if (jsonObject.getString(column) != null && !"".equals(jsonObject.getString(column))) {
+                            // 判断字段类型
+                            if (type.equals("DECIMAL")) {
+                                // 将json解析的值写入datahub中
+                                Logger.info("DECIMAL column: " + column);
+                            } else if (type.equals("TIMESTAMP") ) {
+                                // 转换成时间时间戳
+                                Logger.info("TIMESTAMP column: " + column);
+                            } else {
+                                Logger.info("其他 column: " + column);
+                            }
+
+                        } else {
+                            Logger.info("column: " + column + " ，不存在");
+                        }
+                    }
+                }
+            }
+
+        }
+
 //        String json = "{\n" +
 //                "    \"sequence_num\" : \"1\", \n" +
 //                "    \"time_stamp\" : \"2020-08-11 15:35:42\", \n" +
