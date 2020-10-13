@@ -12,7 +12,6 @@ public class StringDemo {
         int b = parseInt(a);
         System.out.println("b: " + b);
 
-
     }
 
 }

@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 /**
  * 时间工具类
@@ -96,16 +97,72 @@ public class DateUtils {
         return date;
     }
 
-    public static void main(String[] args) {
+    // 获取今天的开始时间
+    private String getStartTime() {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+        Calendar todayStart = Calendar.getInstance();
+        todayStart.set(Calendar.HOUR, 0);
+        todayStart.set(Calendar.MINUTE, 0);
+        todayStart.set(Calendar.SECOND, 0);
+        todayStart.set(Calendar.MILLISECOND, 0);
+
+        String startTime = simpleDateFormat.format(todayStart.getTime());
+
+        System.out.println(todayStart.getTime());
+        System.out.println(startTime);
+        return startTime;
+
+    }
+
+
+    /**
+     * 获取昨天的开始时间
+     * @return
+     */
+    public String getYesterdayStartTime() {
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Calendar calendar = Calendar.getInstance();
 
-        int year = calendar.get(Calendar.YEAR);
-        System.out.println("year: " + year);
+        calendar.add(Calendar.DATE, -1);
+        calendar.set(Calendar.HOUR, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        String yesterdayStartTime = simpleDateFormat.format(calendar.getTime());
+        System.out.println(yesterdayStartTime);
+
+        return yesterdayStartTime;
+
+    }
+
+
+    public static void main(String[] args) {
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Calendar calendar = Calendar.getInstance();
+
+        calendar.add(Calendar.DATE, -1);
+        calendar.set(Calendar.HOUR, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
 
         String time = simpleDateFormat.format(calendar.getTime());
-        System.out.println("time: " + time);
+        System.out.println(time);
+
+
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//
+//        Calendar calendar = Calendar.getInstance();
+//
+//        int year = calendar.get(Calendar.YEAR);
+//        System.out.println("year: " + year);
+//
+//        String time = simpleDateFormat.format(calendar.getTime());
+//        System.out.println("time: " + time);
 
     }
 

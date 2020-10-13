@@ -1,5 +1,8 @@
 package com.zhss.javabase.variable;
 
+/**
+ * 变量
+ */
 public class Variable {
 
     /**
@@ -11,13 +14,13 @@ public class Variable {
 
     String str = "hello world";  // 实例变量
 
-    public void method(){
+    public void method() {
 
-        int i =0;  // 局部变量
+        int i = 0;  // 局部变量
         i = 1 + 7;
 
-        System.out.println("i的值是：" + i );
-        System.out.println("str：" + str );
+        System.out.println("i的值是：" + i);
+        System.out.println("str：" + str);
 
     }
 
